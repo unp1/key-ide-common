@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "contexts": [
+    {
+      "id": "core",
+      "javaSource": "core/src/main/java",
+      "classpath": [],
+      "bootclasspath": null,
+      "includes": []
+    },
+    {
+      "id": "web",
+      "javaSource": "web/src/main/java",
+      "classpath": ["libs/pricing-sources.jar"],
+      "bootclasspath": null,
+      "includes": []
+    },
+    {
+      "id": "web-srcdir",
+      "javaSource": "web/src/main/java",
+      "classpath": ["libs/pricing-src"],
+      "bootclasspath": null,
+      "includes": []
+    }
+  ]
+}

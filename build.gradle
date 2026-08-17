@@ -1,0 +1,76 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '9.6.1'
+}
+
+group = 'org.key-project.ide'
+version = '0.1.0-dev'
+
+description = "Bridge between IDE plugins and a user-supplied KeY installation"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // The JSON-RPC layer KeY's own key-rpc uses, so that moving to KeY's server mode
+    // later changes the service interface rather than the message layer.
+    // Dual-licensed EPL-2.0 or EDL-1.0; taken here under EDL-1.0, which is BSD-3-Clause
+    // and combines with GPL-2.0-only.
+    implementation 'org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:1.0.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+
+    // KeY is supplied at runtime by the user's key-*-exe.jar and is never bundled,
+    // so it is compileOnly here and testImplementation below.
+    compileOnly 'org.key-project:key.ui:3.1.0-dev'
+    compileOnly 'org.key-project:key.core:3.1.0-dev'
+
+    // KeY's own logging, so bridge messages land in KeY's log rather than beside it.
+    compileOnly 'org.slf4j:slf4j-api:2.0.16'
+
+    testImplementation 'org.key-project:key.ui:3.1.0-dev'
+    testImplementation 'org.key-project:key.core:3.1.0-dev'
+
+    // A test that touches KeY has to set logging up first, for the reason BridgeMain gives.
+    testImplementation 'org.slf4j:slf4j-api:2.0.16'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:6.1.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:6.1.2'
+    testImplementation 'org.assertj:assertj-core:3.27.7'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:6.1.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // Compiled against, not only run with: a listener starts logging before KeY is touched.
+    testImplementation 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+
+    // KeY holds a proof tree per proof, and a test that reads several back holds several.
+    // Gradle gives a test JVM 512 MB by default, which runs out part way through the suite.
+    maxHeapSize = '2g'
+
+    // Loading KeY classes writes settings under key.home, which defaults to the user's
+    // own ~/.key. Pinning it keeps a test run out of the developer's KeY configuration.
+    // Every ProofSettings object KeY creates, copies included, saves itself there whenever
+    // one of its values changes, so a proof attempted with its own options leaves them
+    // behind as the defaults of the next JVM. The directory is emptied before each run so
+    // that runs stay independent of each other, as the bridge's own start does.
+    def keyHome = layout.buildDirectory.dir('key-home').get().asFile
+    systemProperty 'key.home', keyHome.absolutePath
+    doFirst { delete keyHome }
+
+    // KeY touches AWT while reading view settings, which steals window focus on macOS.
+    systemProperty 'java.awt.headless', 'true'
+}
+
+// Prints the test classpath, for running a probe against KeY outside the test runner.
+tasks.register('printTestClasspath') {
+    doLast { println sourceSets.test.runtimeClasspath.asPath }
+}
