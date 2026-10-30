@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "contexts": [],
+  "proofDirectory": "proofs",
+  "prover": {
+    "parallel": false,
+    "threads": 4
+  },
+  "obligationOptions": {}
+}

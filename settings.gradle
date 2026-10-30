@@ -1,0 +1,15 @@
+rootProject.name = 'key-ide-common'
+
+// KeY is pinned to the checkout next door rather than to a published release,
+// because the APIs this bridge uses differ from the released 2.12.x line.
+def key = file('../key')
+if (!key.isDirectory()) {
+    throw new GradleException("""
+This is built against a KeY checkout beside it, and there is none at ${key.absolutePath}.
+
+  git clone https://github.com/KeYProject/key.git "${key.absolutePath}"
+
+The first build then builds KeY as well, which takes a while. See README.md.
+""")
+}
+includeBuild(key)
